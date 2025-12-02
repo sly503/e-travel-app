@@ -1,54 +1,118 @@
-# Spring Boot + React Base Template - Frontend
+# E-Travel App
 
-Modern React frontend built with the latest technologies. Ready to be customized for your project.
+A modern travel booking application built with **Astro + React** for SSR (Server-Side Rendering).
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         ASTRO (SSR Layer)                       │
+│  - Renders pages on the server for fast initial load & SEO      │
+│  - Serves static HTML + hydrates React components               │
+├─────────────────────────────────────────────────────────────────┤
+│                         REACT (UI Layer)                        │
+│  - Interactive components with client-side state                │
+│  - shadcn/ui for accessible, customizable UI components         │
+│  - Jotai for lightweight state management                       │
+├─────────────────────────────────────────────────────────────────┤
+│                      TANSTACK QUERY (Data Layer)                │
+│  - Server state management & caching                            │
+│  - Automatic refetching & background updates                    │
+├─────────────────────────────────────────────────────────────────┤
+│                         TAILWIND CSS v4                         │
+│  - Utility-first styling with new CSS-native approach           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## How It Works
+
+### Astro + React Integration
+
+```
+src/
+├── pages/           # Astro pages (.astro) - SSR entry points
+│   └── index.astro  # Imports and renders React components
+├── layouts/         # Astro layouts - shared HTML structure
+│   └── Layout.astro # Base HTML with <head>, styles, etc.
+├── components/      # React components (.tsx)
+│   └── ui/          # shadcn/ui components
+├── App.tsx          # Main React application component
+└── index.css        # Global styles (Tailwind)
+```
+
+### The Request Flow
+
+1. **User requests a page** (e.g., `/`)
+2. **Astro renders** `src/pages/index.astro` on the server
+3. **React components** are rendered to HTML (SSR)
+4. **HTML is sent** to the browser (fast first paint)
+5. **JavaScript loads** and React "hydrates" the page
+6. **Page becomes interactive** (click handlers, state, etc.)
+
+### Client Directives
+
+In `.astro` files, use directives to control when React components hydrate:
+
+```astro
+---
+import MyComponent from "../components/MyComponent";
+---
+
+<!-- Hydrate immediately on page load -->
+<MyComponent client:load />
+
+<!-- Hydrate when browser is idle -->
+<MyComponent client:idle />
+
+<!-- Hydrate when component is visible -->
+<MyComponent client:visible />
+
+<!-- Client-only, no SSR -->
+<MyComponent client:only="react" />
+```
 
 ## Tech Stack
 
-- **React 19** - Latest React with new features
-- **Vite 7** - Lightning-fast build tool
-- **TypeScript** - Type-safe development
-- **Tailwind CSS v4** - Modern utility-first CSS
-- **shadcn/ui** - High-quality, accessible component library
-- **TanStack Query** - Powerful data fetching and caching
-- **TanStack Router** - Type-safe routing (ready to use)
-- **Axios** - HTTP client for API calls
-- **Jotai** - Lightweight state management
-- **Bun** - Fast JavaScript runtime and package manager
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| SSR Framework | **Astro 5** | Server-side rendering, routing, build |
+| UI Framework | **React 19** | Interactive components |
+| Styling | **Tailwind CSS v4** | Utility-first CSS |
+| Components | **shadcn/ui** | Accessible UI primitives |
+| State (Client) | **Jotai** | Lightweight atomic state |
+| State (Server) | **TanStack Query** | Data fetching & caching |
+| HTTP Client | **Axios** | API requests |
+| Runtime | **Bun** | Fast JS runtime & package manager |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Bun 1.2+ installed
-- Spring Boot backend running on port 8081
+- [Bun](https://bun.sh/) 1.2+
 
 ### Installation
 
 ```bash
-cd frontend
 bun install
 ```
 
 ### Development
 
 ```bash
-# Start development server (port 5173)
+# Start dev server at http://localhost:4321
 bun dev
 
 # Type checking
-bun run typecheck
+bun run check
 
 # Linting
 bun run lint
 
 # Format code
 bun run format
-
-# Run tests
-bun test
 ```
 
-### Build
+### Build & Preview
 
 ```bash
 # Build for production
@@ -61,91 +125,78 @@ bun run preview
 ## Project Structure
 
 ```
-frontend/
+e-travel-app/
 ├── src/
-│   ├── components/
-│   │   └── ui/          # shadcn/ui components
-│   ├── lib/
-│   │   ├── api.ts       # API client and endpoints
-│   │   └── utils.ts     # Utility functions
-│   ├── hooks/           # Custom React hooks
-│   ├── App.tsx          # Main app component
-│   ├── main.tsx         # App entry point
-│   └── index.css        # Global styles
-├── components.json      # shadcn/ui configuration
-└── vite.config.ts       # Vite configuration
+│   ├── pages/              # Astro pages (routes)
+│   │   └── index.astro     # Home page
+│   ├── layouts/            # Astro layouts
+│   │   └── Layout.astro    # Base HTML template
+│   ├── components/         # React components
+│   │   └── ui/             # shadcn/ui components
+│   ├── lib/                # Utilities
+│   │   ├── api.ts          # API client
+│   │   └── utils.ts        # Helper functions
+│   ├── App.tsx             # Main React app
+│   └── index.css           # Global styles
+├── public/                 # Static assets
+├── astro.config.mjs        # Astro configuration
+├── tailwind.config.css     # Tailwind configuration
+└── package.json
 ```
 
-## API Integration
+## Adding New Pages
 
-The frontend is configured to connect to the Spring Boot backend at `http://localhost:8081`.
+Create a new `.astro` file in `src/pages/`:
 
-### Example Usage
+```astro
+---
+// src/pages/flights.astro
+import Layout from "../layouts/Layout.astro";
+import FlightSearch from "../components/FlightSearch";
+---
 
-```typescript
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-
-function UsersList() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => {
-      const response = await api.get("/api/admin/users");
-      return response.data;
-    },
-  });
-
-  if (isLoading) return <div>Loading...</div>;
-
-  return (
-    <div>
-      {data?.data.map((user) => (
-        <div key={user.id}>{user.username}</div>
-      ))}
-    </div>
-  );
-}
+<Layout title="Search Flights - E-Travel">
+  <FlightSearch client:load />
+</Layout>
 ```
 
-## Adding Components
+This creates a route at `/flights`.
 
-Add new shadcn/ui components:
+## Adding shadcn/ui Components
 
 ```bash
 # Add a single component
 bunx shadcn@canary add button
 
 # Add multiple components
-bunx shadcn@canary add dialog table form
+bunx shadcn@canary add dialog table form select
+```
+
+## SSR Modes
+
+In `astro.config.mjs`, you can configure the output mode:
+
+```js
+export default defineConfig({
+  output: "static",  // Pre-render all pages at build time (default)
+  // output: "server",  // Full SSR on every request
+  // output: "hybrid",  // Mix of static and SSR per-page
+});
 ```
 
 ## Environment Variables
 
-Create a `.env` file in the frontend directory:
+Create a `.env` file:
 
 ```env
-VITE_API_URL=http://localhost:8081
+PUBLIC_API_URL=http://localhost:8081
 ```
 
-## Available shadcn/ui Components
+Access in code:
+```typescript
+const apiUrl = import.meta.env.PUBLIC_API_URL;
+```
 
-Currently installed:
-- Button
-- Card
-- Input
+## License
 
-Browse all available components: https://ui.shadcn.com/docs/components
-
-## Code Style
-
-- Use Prettier for formatting (configured in package.json)
-- Follow ESLint rules
-- Use TypeScript strict mode
-- Prefer functional components with hooks
-
-## Notes
-
-- This is a base setup suitable for multiple applications
-- Tailwind CSS v4 is configured with the new `@import "tailwindcss"` syntax
-- Path aliases are set up: `@/` maps to `src/`
-- Dark mode is ready to use with the `.dark` class
+MIT
